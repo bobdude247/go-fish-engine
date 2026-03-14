@@ -13,8 +13,37 @@ const targetSelectEl = document.getElementById('targetSelect');
 const rankSelectEl = document.getElementById('rankSelect');
 const askBtn = document.getElementById('askBtn');
 
-function handText(player) {
-  return player.hand.map((c) => c.rank).join(' ') || '(empty)';
+const suitSymbols = {
+  hearts: '♥',
+  diamonds: '♦',
+  clubs: '♣',
+  spades: '♠',
+};
+
+function cardColorClass(suit) {
+  return suit === 'hearts' || suit === 'diamonds' ? 'red' : 'black';
+}
+
+function renderHand(player) {
+  if (player.hand.length === 0) {
+    return '<div class="cards cards-empty">(empty)</div>';
+  }
+
+  const cards = player.hand
+    .map((card, index) => {
+      const symbol = suitSymbols[card.suit] ?? '?';
+      const colorClass = cardColorClass(card.suit);
+      return `
+        <div class="playing-card ${colorClass}" style="--card-index:${index};" aria-label="${card.rank} of ${card.suit}">
+          <span class="corner top">${card.rank}${symbol}</span>
+          <span class="center">${symbol}</span>
+          <span class="corner bottom">${card.rank}${symbol}</span>
+        </div>
+      `;
+    })
+    .join('');
+
+  return `<div class="cards">${cards}</div>`;
 }
 
 function renderPlayers() {
@@ -26,7 +55,7 @@ function renderPlayers() {
       <h3>${p.name}</h3>
       <div>Books: ${p.books.length} (${p.books.join(', ') || 'none'})</div>
       <div>Cards: ${p.hand.length}</div>
-      <div class="cards">${handText(p)}</div>
+      ${renderHand(p)}
     `;
     playersEl.appendChild(div);
   });
