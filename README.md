@@ -3,34 +3,44 @@
 Reusable card/deck engine plus a Go Fish implementation.
 
 ## Current scope
-- Local playable Go Fish (CLI) for **2 to 4 players**.
-- Single 52-card deck.
-- **All cards are dealt** at game start using round-robin deal order.
-- Deal size auto-adjusts based on player count and starting dealer/seat order.
-- Pure game engine logic kept separate from UI/transport layers.
+- Local playable Go Fish for **2 to 4 players**.
+- Standard 52-card deck.
+- **7 cards per player** are dealt at start.
+- Remaining cards stay in a draw pile for normal “Go Fish” draws.
+- Engine logic separated from adapters (CLI + web UI).
 
 ## Project structure
 - `src/engine/cards`: reusable card + deck primitives.
-- `src/games/go-fish`: game rules/state machine (engine + local CLI adapter).
-- `src/ui`: placeholder for future browser/UI layers.
-- `tests`: node test suite.
+- `src/games/go-fish`: rules + state machine.
+- `src/games/go-fish/cli-local.js`: terminal adapter.
+- `web/`: basic browser UI adapter.
+- `tests/`: node test suite.
 
 ## Run locally
+### 1) Run tests
 ```bash
 npm test
+```
+
+### 2) Play in terminal
+```bash
 node src/games/go-fish/cli-local.js
 ```
 
-## API examples
-```js
-import { goFish } from './src/index.js';
-
-const state = goFish.createGame({ playerNames: ['P1', 'P2', 'P3'] });
-console.log(state.players.map((p) => p.hand.length));
+### 3) Play in browser (graphical)
+```bash
+python3 -m http.server 8090
+```
+Open:
+```text
+http://localhost:8090/web/
 ```
 
+## Current UI limitation
+- In local same-screen mode, all players' cards are visible.
+- This is expected for local prototype testing.
+
 ## Future roadmap
-- 1-player mode with NPC opponent (configurable AI strategy).
-- Optional support for player counts beyond 4 with enforced upper cap.
-- Network-ready adapter boundary so same engine can be hosted online later (WebSocket/server authority model).
-- Browser UI module that reuses the same engine contract.
+- 1-player mode with NPC opponent.
+- Optional upper-limit expansion beyond 4 players.
+- Online multiplayer mode where each player only sees their own hand.

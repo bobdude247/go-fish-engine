@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Go Fish Local UI</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>🎣 Go Fish (Local Prototype)</h1>
+        <p>All players are visible on one screen for local testing.</p>
+      </header>
+
+      <section class="setup" id="setup">
+        <label>Players (2-4)
+          <input id="playerCount" type="number" min="2" max="4" value="2" />
+        </label>
+        <button id="startBtn">Start Game</button>
+      </section>
+
+      <section id="board" class="hidden">
+        <div class="status-row">
+          <div id="statusText"></div>
+          <div id="drawPile"></div>
+        </div>
+
+        <div id="players" class="players"></div>
+
+        <div class="controls">
+          <label>Target
+            <select id="targetSelect"></select>
+          </label>
+          <label>Rank
+            <select id="rankSelect"></select>
+          </label>
+          <button id="askBtn">Ask</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

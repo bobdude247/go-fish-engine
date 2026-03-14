@@ -24,24 +24,26 @@ async function askName(rl, index) {
 async function main() {
   const rl = readline.createInterface({ input, output });
   try {
-    console.log('Go Fish (local CLI, 2-4 players, all cards dealt)');
+    console.log('Go Fish (local CLI, 2-4 players, 7-card deal)');
     const playerCount = await askInt(rl, 'How many players (2-4)? ', 2, 4);
     const names = [];
     for (let i = 0; i < playerCount; i++) {
       names.push(await askName(rl, i));
     }
 
-    const state = createGame({ playerNames: names });
+    const state = createGame({ playerNames: names, initialHandSize: 7 });
 
     while (state.phase === 'active') {
       const player = state.players[state.currentPlayerIndex];
       console.log('\n----------------------------------------');
       console.log(`Turn ${state.turnCount}: ${player.name}`);
-      console.log(`${player.name} hand: ${handSummary(player)}`);
+      console.log(`Draw pile: ${state.drawPile.length}`);
+      console.log(`${player.name} hand: ${handSummary(player) || '(empty)'}`);
       console.log(`${player.name} books: ${player.books.join(', ') || '(none)'}`);
 
       const legalRanks = listLegalRanksForPlayer(player);
       if (legalRanks.length === 0) {
+        console.log(`${player.name} has no cards to ask with.`);
         state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
         state.turnCount += 1;
         continue;

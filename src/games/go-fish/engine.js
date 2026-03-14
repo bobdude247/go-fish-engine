@@ -1,6 +1,8 @@
 import { createStandardDeck, shuffle } from '../../engine/cards/deck.js';
 import { validPlayerCount, nextPlayerIndex, normalizeRank, isRank } from './rules.js';
 
+const DEFAULT_INITIAL_HAND_SIZE = 7;
+
 function makePlayer(name, id) {
   return {
     id,
@@ -16,18 +18,24 @@ export function createPlayers(names) {
   return names.map((name, index) => makePlayer(name, index));
 }
 
-export function dealAllCards(players, deck, startPlayerIndex = 0) {
+export function dealInitialHands(players, deck, cardsPerPlayer = DEFAULT_INITIAL_HAND_SIZE, startPlayerIndex = 0) {
   if (!Array.isArray(players) || players.length === 0) throw new Error('players required');
   if (!Array.isArray(deck)) throw new Error('deck must be array');
   if (startPlayerIndex < 0 || startPlayerIndex >= players.length) throw new Error('invalid startPlayerIndex');
 
-  let turn = startPlayerIndex;
   const drawPile = [...deck];
-  while (drawPile.length > 0) {
-    const card = drawPile.shift();
-    players[turn].hand.push(card);
-    turn = nextPlayerIndex(turn, players.length);
+  let turn = startPlayerIndex;
+
+  for (let round = 0; round < cardsPerPlayer; round++) {
+    for (let i = 0; i < players.length; i++) {
+      const card = drawPile.shift();
+      if (!card) break;
+      players[turn].hand.push(card);
+      turn = nextPlayerIndex(turn, players.length);
+    }
   }
+
+  return drawPile;
 }
 
 export function groupHandByRank(hand) {
@@ -44,7 +52,7 @@ export function collectCompletedBooks(player) {
   const keep = [];
   for (const [rank, cards] of rankMap.entries()) {
     if (cards.length === 4) {
-      player.books.push(rank);
+      if (!player.books.includes(rank)) player.books.push(rank);
     } else {
       keep.push(...cards);
     }
@@ -69,10 +77,29 @@ export function handHasRank(player, rank) {
   return player.hand.some((c) => c.rank === rank);
 }
 
-export function createGame({ playerNames, rng = Math.random, startingPlayer = 0 }) {
+function maybeDrawWhenEmpty(player, drawPile) {
+  if (player.hand.length === 0) {
+    const card = drawTopCard(drawPile);
+    if (card) player.hand.push(card);
+  }
+}
+
+function allBooksCollected(players) {
+  const totalBooks = players.reduce((sum, p) => sum + p.books.length, 0);
+  return totalBooks === 13;
+}
+
+function maybeFinishGame(state) {
+  const noCardsLeft = state.drawPile.length === 0 && state.players.every((p) => p.hand.length === 0);
+  if (noCardsLeft || allBooksCollected(state.players)) {
+    state.phase = 'finished';
+  }
+}
+
+export function createGame({ playerNames, rng = Math.random, startingPlayer = 0, initialHandSize = DEFAULT_INITIAL_HAND_SIZE }) {
   const players = createPlayers(playerNames);
   const deck = shuffle(createStandardDeck(), rng);
-  dealAllCards(players, deck, startingPlayer);
+  const drawPile = dealInitialHands(players, deck, initialHandSize, startingPlayer);
 
   players.forEach(collectCompletedBooks);
 
@@ -80,9 +107,12 @@ export function createGame({ playerNames, rng = Math.random, startingPlayer = 0 
     phase: 'active',
     players,
     currentPlayerIndex: startingPlayer,
-    drawPile: [],
+    drawPile,
     turnCount: 1,
-    lastAction: null
+    lastAction: null,
+    config: {
+      initialHandSize
+    }
   };
 }
 
@@ -94,28 +124,39 @@ export function takeTurn(state, { targetPlayerIndex, rank }) {
   if (state.phase !== 'active') throw new Error('game already over');
 
   const current = state.players[state.currentPlayerIndex];
-  const target = state.players[targetPlayerIndex];
-  const askedRank = normalizeRank(rank);
+  maybeDrawWhenEmpty(current, state.drawPile);
 
+  const askedRank = normalizeRank(rank);
   if (!isRank(askedRank)) throw new Error('invalid rank');
   if (targetPlayerIndex === state.currentPlayerIndex) throw new Error('cannot ask yourself');
   if (!handHasRank(current, askedRank)) throw new Error('must ask for a rank in your own hand');
 
+  const target = state.players[targetPlayerIndex];
   const moved = transferRankCards(target, current, askedRank);
+
   if (moved > 0) {
     collectCompletedBooks(current);
     state.lastAction = `${current.name} took ${moved} ${askedRank} card(s) from ${target.name}`;
   } else {
-    state.lastAction = `${current.name} asked ${target.name} for ${askedRank}: Go Fish!`;
-    // all cards are dealt for this variant; no draw pile after setup.
-    state.currentPlayerIndex = nextPlayerIndex(state.currentPlayerIndex, state.players.length);
-    state.turnCount += 1;
+    const drawn = drawTopCard(state.drawPile);
+    if (drawn) {
+      current.hand.push(drawn);
+      collectCompletedBooks(current);
+      if (drawn.rank === askedRank) {
+        state.lastAction = `${current.name} asked ${target.name} for ${askedRank}: Go Fish! Drew ${drawn.rank} and goes again.`;
+      } else {
+        state.lastAction = `${current.name} asked ${target.name} for ${askedRank}: Go Fish! Drew ${drawn.rank}. Turn passes.`;
+        state.currentPlayerIndex = nextPlayerIndex(state.currentPlayerIndex, state.players.length);
+        state.turnCount += 1;
+      }
+    } else {
+      state.lastAction = `${current.name} asked ${target.name} for ${askedRank}: Go Fish! Draw pile empty, turn passes.`;
+      state.currentPlayerIndex = nextPlayerIndex(state.currentPlayerIndex, state.players.length);
+      state.turnCount += 1;
+    }
   }
 
-  if (state.players.every((p) => p.hand.length === 0)) {
-    state.phase = 'finished';
-  }
-
+  maybeFinishGame(state);
   return state;
 }
 

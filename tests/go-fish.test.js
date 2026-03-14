@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createStandardDeck } from '../src/engine/cards/deck.js';
 import { validPlayerCount } from '../src/games/go-fish/rules.js';
-import { createPlayers, dealAllCards } from '../src/games/go-fish/engine.js';
+import { createPlayers, dealInitialHands, createGame, takeTurn } from '../src/games/go-fish/engine.js';
 
 test('validPlayerCount supports only 2-4', () => {
   assert.equal(validPlayerCount(1), false);
@@ -12,28 +12,40 @@ test('validPlayerCount supports only 2-4', () => {
   assert.equal(validPlayerCount(5), false);
 });
 
-test('dealAllCards distributes all 52 cards and keeps counts near-even', () => {
+test('dealInitialHands deals 7 each and leaves draw pile', () => {
   const players = createPlayers(['A', 'B', 'C']);
-  dealAllCards(players, createStandardDeck(), 0);
+  const drawPile = dealInitialHands(players, createStandardDeck(), 7, 0);
 
-  const counts = players.map((p) => p.hand.length);
-  const total = counts.reduce((a, b) => a + b, 0);
-  const max = Math.max(...counts);
-  const min = Math.min(...counts);
-
-  assert.equal(total, 52);
-  assert.ok(max - min <= 1);
+  assert.deepEqual(players.map((p) => p.hand.length), [7, 7, 7]);
+  assert.equal(drawPile.length, 31);
 });
 
-test('deal order gives extra card(s) to earliest players from start index', () => {
-  const players = createPlayers(['A', 'B', 'C', 'D']);
-  dealAllCards(players, createStandardDeck(), 2);
+test('createGame uses 7-card deal for 2-4 players', () => {
+  const g2 = createGame({ playerNames: ['A', 'B'] });
+  assert.deepEqual(g2.players.map((p) => p.hand.length), [7, 7]);
+  assert.equal(g2.drawPile.length, 38);
 
-  // 52 / 4 is even, all should be 13 in this case.
-  assert.deepEqual(players.map((p) => p.hand.length), [13, 13, 13, 13]);
+  const g4 = createGame({ playerNames: ['A', 'B', 'C', 'D'] });
+  assert.deepEqual(g4.players.map((p) => p.hand.length), [7, 7, 7, 7]);
+  assert.equal(g4.drawPile.length, 24);
+});
 
-  const playersThree = createPlayers(['A', 'B', 'C']);
-  dealAllCards(playersThree, createStandardDeck(), 1);
-  // For 3 players: 18,17,17 with player index 1 receiving first extra card.
-  assert.deepEqual(playersThree.map((p) => p.hand.length), [17, 18, 17]);
+test('Go Fish miss draws from pile and can pass turn', () => {
+  const state = {
+    phase: 'active',
+    players: [
+      { id: 0, name: 'P1', hand: [{ suit: 'hearts', rank: 'A' }], books: [] },
+      { id: 1, name: 'P2', hand: [{ suit: 'clubs', rank: 'K' }], books: [] }
+    ],
+    currentPlayerIndex: 0,
+    drawPile: [{ suit: 'spades', rank: '2' }],
+    turnCount: 1,
+    lastAction: null,
+    config: { initialHandSize: 7 }
+  };
+
+  takeTurn(state, { targetPlayerIndex: 1, rank: 'A' });
+  assert.equal(state.drawPile.length, 0);
+  assert.equal(state.currentPlayerIndex, 1);
+  assert.equal(state.turnCount, 2);
 });

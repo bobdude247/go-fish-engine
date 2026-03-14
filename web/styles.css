@@ -1,0 +1,14 @@
+:root { --bg: #f7fbff; --panel: #fff; --ink: #27333f; --accent: #6ba8ff; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+.app { max-width: 1000px; margin: 0 auto; padding: 12px; display: grid; gap: 12px; }
+header, .setup, #board { background: var(--panel); border: 2px solid #d9e7fb; border-radius: 12px; padding: 12px; }
+.setup { display: flex; gap: 8px; align-items: center; }
+.status-row { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; }
+.players { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.player { border: 2px solid #e5eefc; border-radius: 10px; padding: 8px; }
+.player.current { border-color: var(--accent); box-shadow: 0 0 0 2px #dcebff inset; }
+.cards { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: normal; }
+.controls { margin-top: 10px; display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+button { border: 0; background: #d7e7ff; color: #1e3350; border-radius: 8px; padding: 8px 10px; font-weight: 700; }
+.hidden { display: none; }
