@@ -14,10 +14,7 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.08), transparent 34%),
-    radial-gradient(circle at 80% 85%, rgba(255, 255, 255, 0.06), transparent 30%),
-    repeating-radial-gradient(circle at center, var(--felt-1) 0, var(--felt-1) 14px, var(--felt-2) 15px, var(--felt-2) 28px);
+  background: var(--bg);
   color: var(--ink);
   min-height: 100vh;
 }
@@ -33,8 +30,8 @@ body {
 header,
 .setup,
 #board {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
+  background: rgba(10, 67, 42, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 14px;
   padding: 12px;
   backdrop-filter: blur(2px);
@@ -60,44 +57,121 @@ header p {
 .status-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 10px;
   font-weight: 700;
   margin-bottom: 12px;
 }
 
+.draw-pile-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.draw-pile-stack {
+  position: relative;
+  width: 54px;
+  height: 76px;
+}
+
+.pile-card {
+  position: absolute;
+  inset: 0;
+}
+
+.card-back {
+  border-radius: 8px;
+  border: 1px solid #e6d7af;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.09), transparent 42%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0 6px, rgba(0, 0, 0, 0.08) 6px 12px),
+    linear-gradient(170deg, #144f3f 0%, #0f3f30 55%, #0b3328 100%);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.card-back::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(255, 226, 134, 0.55);
+  border-radius: 6px;
+}
+
+.card-back::after {
+  content: 'bobdude247';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffe286;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+}
+
+.card-back-1 {
+  transform: rotate(-6deg) translate(-7px, 4px);
+}
+
+.card-back-2 {
+  transform: rotate(-2deg) translate(-3px, 2px);
+}
+
+.card-back-3 {
+  transform: rotate(2deg);
+}
+
+.draw-pile-count {
+  font-weight: 700;
+}
+
 .players {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(5, 40, 25, 0.32);
 }
 
 .player {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  padding: 10px;
-  background: rgba(11, 47, 31, 0.44);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0;
+  padding: 10px 4px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.player:first-child {
+  border-top: 0;
 }
 
 .player h3 {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 
 .player.current {
-  border-color: var(--accent);
-  box-shadow:
-    0 0 0 2px rgba(255, 226, 134, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: rgba(255, 226, 134, 0.14);
+  border-radius: 8px;
+  border-top-color: transparent;
+  box-shadow: 0 0 0 1px rgba(255, 226, 134, 0.35);
 }
 
 .cards {
   margin-top: 8px;
-  min-height: 110px;
+  min-height: 80px;
   display: flex;
   align-items: flex-end;
-  overflow-x: auto;
-  overflow-y: visible;
-  padding: 6px 0 2px;
+  flex-wrap: nowrap;
+  gap: 0;
+  overflow: visible;
+  padding: 4px 0 2px;
   scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
 }
 
@@ -109,8 +183,8 @@ header p {
 }
 
 .playing-card {
-  --card-w: 68px;
-  --card-h: 96px;
+  --card-w: 54px;
+  --card-h: 76px;
   width: var(--card-w);
   height: var(--card-h);
   border-radius: 8px;
@@ -119,9 +193,9 @@ header p {
   color: #14243a;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
   position: relative;
-  margin-left: calc(var(--card-index) * -44px);
+  margin-left: -28px;
   transform-origin: bottom center;
-  transform: rotate(calc((var(--card-index) - 3) * 2deg));
+  transform: rotate(calc((var(--card-index) - 3) * 0.6deg));
   z-index: calc(var(--card-index) + 1);
   flex: 0 0 auto;
 }

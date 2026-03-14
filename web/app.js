@@ -93,7 +93,16 @@ function renderStatus() {
     const current = state.players[state.currentPlayerIndex];
     statusTextEl.textContent = `Turn ${state.turnCount}: ${current.name}${state.lastAction ? ` | ${state.lastAction}` : ''}`;
   }
-  drawPileEl.textContent = `Draw pile: ${state.drawPile.length}`;
+
+  const pileCount = state.drawPile.length;
+  const visibleBacks = Math.min(3, pileCount);
+  const stack = Array.from({ length: visibleBacks }, (_, idx) => `<div class="pile-card card-back card-back-${idx + 1}" aria-hidden="true"></div>`).join('');
+  drawPileEl.innerHTML = `
+    <div class="draw-pile-wrap" aria-label="Draw pile has ${pileCount} cards">
+      <div class="draw-pile-stack">${stack}</div>
+      <div class="draw-pile-count">Draw pile: ${pileCount}</div>
+    </div>
+  `;
 }
 
 function render() {
